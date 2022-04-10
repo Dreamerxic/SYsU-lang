@@ -97,8 +97,7 @@ FuncType: T_INT {}
 Ident: T_IDENTIFIER {}
 
 Block: T_L_BRACE T_R_BRACE {}
-
-Block: T_L_BRACE BlockItem T_R_BRACE {}
+     | T_L_BRACE BlockItem T_R_BRACE {}
 
 BlockItem: Stmt {
   auto inner = stak.back();
