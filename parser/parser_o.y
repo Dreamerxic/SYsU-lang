@@ -8,7 +8,7 @@
     llvm::errs() << (x);                                                       \
   } while (0)
 
-
+namespace {
 auto llvmin = llvm::MemoryBuffer::getFileOrSTDIN("-");
 auto input = llvmin.get() -> getBuffer();
 
@@ -24,7 +24,7 @@ auto wk_getline(char endline = '\n') {
 }
 
 llvm::json::Array stak;
-
+} // namespace
 
 auto yylex() {
   auto tk = wk_getline();
