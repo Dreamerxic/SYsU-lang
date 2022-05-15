@@ -9,25 +9,24 @@
 
 namespace {
 llvm::LLVMContext TheContext;
-llvm::IRBuilder<> Builder(TheContext);
 llvm::Module TheModule("-", TheContext);
 
 llvm::Function *buildFunctionDecl(const llvm::json::Object *O) {
   // First, check for an existing function from a previous declaration.
-  auto TheName = O->get("name")->getAsString();
-  llvm::Function *TheFunction = TheModule.getFunction(*TheName);
+  auto TheName = O->get("name")->getAsString()->str();
+  llvm::Function *TheFunction = TheModule.getFunction(TheName);
 
   if (!TheFunction)
     TheFunction = llvm::Function::Create(
         llvm::FunctionType::get(llvm::Type::getInt32Ty(TheContext), {}, false),
-        llvm::Function::ExternalLinkage, *TheName, &TheModule);
+        llvm::Function::ExternalLinkage, TheName, &TheModule);
 
   if (!TheFunction)
     return nullptr;
 
   // Create a new basic block to start insertion into.
   auto BB = llvm::BasicBlock::Create(TheContext, "entry", TheFunction);
-  Builder.SetInsertPoint(BB);
+  llvm::IRBuilder<> Builder(BB);
 
   if (auto RetVal = llvm::ConstantInt::get(
           TheContext, /* i32 3(decimal) */ llvm::APInt(32, "3", 10))) {

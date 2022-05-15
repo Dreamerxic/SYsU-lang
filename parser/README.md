@@ -2,7 +2,9 @@
 
 ## 实验描述
 
-本次语法分析实验中，你被希望完成一个语法分析器，接受来自 `sysu-lexer` 的输入，产生与 `clang -cc1 -ast-dump=json` 相当的输出。注意，以下 log 省略了无关内容。
+在本次语法分析实验中，你被希望完成一个语法分析器，接受来自 `sysu-lexer` 的输入，产生与 `clang -cc1 -ast-dump=json` 相当的输出。预期的代码行数为 1000 行，预期的完成时间为 24 小时 ～ 72 小时。
+
+注意，以下 log 省略了无关内容。
 
 ```bash
 $ ( export PATH=~/sysu/bin:$PATH \
@@ -134,7 +136,7 @@ $ ( export PATH=~/sysu/bin:$PATH \
   CPATH=~/sysu/include:$CPATH \
   LIBRARY_PATH=~/sysu/lib:$LIBRARY_PATH \
   LD_LIBRARY_PATH=~/sysu/lib:$LD_LIBRARY_PATH &&
-  clang -cc1 -E tester/functional/027_if2.sysu.c |
+  clang -E tester/functional/027_if2.sysu.c |
   clang -cc1 -ast-dump )
 TranslationUnitDecl 0x23d4568 <<invalid sloc>> <invalid sloc>
 |-TypedefDecl # 原先第二行到第十五行为内置类型，此处省略
@@ -258,16 +260,22 @@ flowchart TD;
 
 ## 评分规则
 
-本实验的评分分为两部分：基础部分和扩展部分。
+本实验的评分分为两部分：基础部分和挑战部分。
 
 - 对于基础部分的实验，由低到高分别给出三档实验要求，并要求通过对应的自动评测。详见自动评测细则一节。
-- 对于扩展部分的实验，你可以完成扩展方向一节的要求，也可以自行探索；如果可能，请同时编写对应的自动评测脚本。助教将按照你实现的难度给出评分。
+- 对于挑战部分的实验，你可以完成挑战方向一节的要求，也可以自行探索；如果可能，请同时编写对应的自动评测脚本。助教将按照你实现的难度给出评分。
 
 如有疑问，参照 `clang -cc1 -ast-dump=json`。你需要提交一份实验报告，简要记录你的实验过程、遇到的难点以及解决的方法，并在报告中附上自动评测的结果。
 
 ### 自动评测细则
 
-本次实验的评测项目为 `parser-[0-3]`。`parser-0` 仅用于证明模板（代码与评测脚本）可以正确工作，不计入成绩；其他三个评测项详见[评测脚本](../compiler/sysu-compiler)以了解检查算法，但不得修改评测逻辑而投机取巧。你也可以像这样调用评测脚本，单独执行其中某一个评测项。
+本次实验的评测项目为 `parser-[0-3]`。`parser-0` 仅用于证明模板（代码与评测脚本）可以正确工作，不计入成绩；其他三个评测项依次检查：
+
+1. `sysu-parser` 是否提取出正确的 `"kind"`、`"name"`、`"value"` 键值，不含 `"InitListExpr"`（60 分）。
+2. `sysu-parser` 是否提取出正确的 `"type"` 键值及是否构造正确的 `"InitListExpr"` 生成树（30 分）。
+3. `sysu-parser` 是否提取出其它非 `"id"` 以外的键值（10 分）。
+
+评测脚本忽略空白符，可以查看[评测脚本](../compiler/sysu-compiler)以了解检查算法，但不得修改评测逻辑而投机取巧。你也可以像这样调用评测脚本，单独执行其中某一个评测项。
 
 ```bash
 ( export PATH=~/sysu/bin:$PATH \
@@ -277,11 +285,11 @@ flowchart TD;
   sysu-compiler --unittest=parser-1 "**/*.sysu.c" )
 ```
 
-**根据同学们的反馈下调了实验难度，只需通过 `parser-1` 即可通过本次实验，`parser-2`、`parser-3` 列为本次实验的扩展选项。**
+**根据同学们的反馈下调了实验难度，只需通过 `parser-1` 即可通过本次实验，`parser-2`、`parser-3` 列为本次实验的挑战选项。**
 
-## 扩展方向
+## 挑战方向
 
-本节给出一些扩展方向供参考。
+本节给出一些挑战方向供参考。
 
 1. 扩展更多 C 语言的语法。
 2. 不借助 bison，并完全使用 SYsU 完成本实验，然后用它作为输入测试功能是否正确，以实现自举。
@@ -302,7 +310,8 @@ flowchart TD;
      - 或者相反！
 6. 将 `sysu-lexer` 与 `sysu-parser` 的核心代码链接到一起，作为 `sysu-lang` 完整编译器的一部分。
    - 输入一个经过预处理的 SYsU 源程序，输出其语法分析树。
-   - 提示：`ADD_FLEX_BISON_DEPENDENCY`
+   - 建议：将 `sysu-lexer` 的核心代码打包成一个 `libsysuLexer.so`，将 `sysu-parser` 的核心代码打包成一个 `libsysuParser.so`，然后链接到到同一个 `main.cc`。
+   - 注意：`add_flex_bison_dependency`
 7. 鉴于本次实验已经开始进入 LLVM 开发范畴，建议遵守 [LLVM Coding Standards](https://releases.llvm.org/11.0.1/docs/CodingStandards.html)
    - 可以使用 `clang-tidy` 与 `clang-format` 工具检查你的代码是否规范，如 `cmake -DCMAKE_CXX_CLANG_TIDY=clang-tidy #...`
    - 将 [LLVM Coding Standards](https://releases.llvm.org/11.0.1/docs/CodingStandards.html) 与 [GNU](https://www.gnu.org/prep/standards/standards.html)、[Google](https://google.github.io/styleguide/)、[Chromium](https://chromium.googlesource.com/chromium/src/+/HEAD/styleguide/c++/c++-dos-and-donts.md)、[Microsoft](https://docs.microsoft.com/zh-cn/dotnet/csharp/fundamentals/coding-style/coding-conventions)、[Mozilla](https://firefox-source-docs.mozilla.org/code-quality/coding-style/coding_style_cpp.html)、[WebKit](https://webkit.org/code-style-guidelines/) 等其他知名编程规范进行比较，选出一种或是基于他们归纳出一个你认为最合理的编程规范，编写对应的 `.clang-format` 与 `.clang-tidy` 文件，并在以后坚持使用下去！~~（就助教来说更加偏好 LLVM，毕竟没有人会比编译器更懂语言）~~

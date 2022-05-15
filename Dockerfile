@@ -1,51 +1,50 @@
 # syntax=docker/dockerfile:1.4
 FROM debian:11
-RUN <<EOF
-apt update -y
-apt upgrade -y
-apt install -y \
-    ninja-build cmake git python3 \
-    cpp lld flex bison zlib1g-dev \
-    clang libclang-dev llvm-dev \
-    tar gzip
-apt clean -y
-EOF
 WORKDIR /autograder
-WORKDIR /root
-COPY <<build_install.sh <<run.sh . /root/SYsU-lang/
+WORKDIR /workspace
+VOLUME /workspace
+COPY <<build_install.sh <<run.sh . /workspace/SYsU-lang/
 #!/bin/sh
-rm -rf /root/sysu
+rm -rf ~/sysu
 cmake -G Ninja \\
     -DCMAKE_C_COMPILER=clang \\
     -DCMAKE_CXX_COMPILER=clang++ \\
-    -DCMAKE_INSTALL_PREFIX=/root/sysu \\
+    -DCMAKE_INSTALL_PREFIX=~/sysu \\
+    -DCMAKE_MODULE_PATH="$(llvm-config --cmakedir)" \\
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \\
     -DCPACK_SOURCE_IGNORE_FILES=".git/;tester/third_party/" \\
-    -S /root/SYsU-lang \\
-    -B /root/sysu/build
-cmake --build /root/sysu/build
-cmake --build /root/sysu/build -t install
+    -S /workspace/SYsU-lang \\
+    -B ~/sysu/build
+cmake --build ~/sysu/build
+cmake --build ~/sysu/build -t install
 build_install.sh
 #!/bin/sh
-tar -C /root -zxvf /autograder/submission/*.tar.gz
-rm -rf /root/SYsU-lang/generator
-cp -r /root/SYsU-lang-*-Source/generator /root/SYsU-lang
-rm -rf /root/SYsU-lang/optimizer
-cp -r /root/SYsU-lang-*-Source/optimizer /root/SYsU-lang
-# rm -rf /root/SYsU-lang/compiler
-# cp -r /root/SYsU-lang-*-Source/compiler /root/SYsU-lang
-/root/build_install
+python3 -m tarfile -e /autograder/submission/*.tar.gz /workspace/submission
+rm -rf /workspace/SYsU-lang/generator
+cp -r /workspace/submission/*-Source/generator /workspace/SYsU-lang
+rm -rf /workspace/SYsU-lang/optimizer
+cp -r /workspace/submission/*-Source/optimizer /workspace/SYsU-lang
+rm -rf /workspace/submission
+~/build_install
 mkdir -p /autograder/results
 sysu-compiler \\
     --unittest=benchmark_generator_and_optimizer_1 \\
-    --unittest-skip-filesize -1 \\
-    "/root/SYsU-lang/**/*.sysu.c" >/autograder/results/results.json
+    "/workspace/SYsU-lang/**/*.sysu.c" >/autograder/results/results.json
 run.sh
 RUN <<EOF
-mv /root/SYsU-lang/run.sh /autograder/run
+apt update -y
+apt upgrade -y
+apt install --no-install-recommends -y \
+    clang libclang-dev llvm-dev \
+    zlib1g-dev lld flex bison \
+    ninja-build cmake python3 git
+apt autoremove -y
+apt clean -y
+mv /workspace/SYsU-lang/run.sh /autograder/run
 chmod +x /autograder/run
-mv /root/SYsU-lang/build_install.sh /root/build_install
-chmod +x /root/build_install
-/root/build_install
+mv /workspace/SYsU-lang/build_install.sh ~/build_install
+chmod +x ~/build_install
+~/build_install
 EOF
 ENV PATH=/root/sysu/bin:$PATH \
     CPATH=/root/sysu/include:$CPATH \

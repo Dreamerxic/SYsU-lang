@@ -7,11 +7,10 @@ name: Docker
 
 on:
   push:
-    branches: [main]
-    # Publish semver tags as releases.
-    tags: ["v*.*.*"]
+    branches: [latest]
+    tags: ["*"]
   pull_request:
-    branches: [main]
+    branches: [latest]
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -65,7 +64,7 @@ jobs:
           image: ${{ steps.meta.outputs.tags }}
           run: |
             export CTEST_OUTPUT_ON_FAILURE=1
-            cmake --build /root/sysu/build -t test
+            cmake --build ~/sysu/build -t test
 
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
